@@ -8,9 +8,9 @@ import matplotlib.animation as animation
 
 class GeneticAlgorithm:
     def __init__(self, initial_value, final_value, generations, optimization, individual_mutation, mutation_per_gen,
-                 initial_limit_x, maximum_limit_x, reference_resolution, ):
-        self.initial_value = initial_value
-        self.final_value = final_value
+                 initial_limit_x, maximum_limit_x, reference_resolution):
+        self.initial_value = int(initial_value)
+        self.final_value = int(final_value)
         self.generations = generations
         self.optimization = optimization
         self.individual_mutation = individual_mutation
@@ -18,7 +18,6 @@ class GeneticAlgorithm:
         self.initial_limit_x = initial_limit_x
         self.maximum_limit_x = maximum_limit_x
         self.reference_resolution = reference_resolution
-  
 
         self.best_global_individual = None
         self.last_population = None
@@ -30,9 +29,13 @@ class GeneticAlgorithm:
         self.bits = ceil(log2(self.range / self.reference_resolution + 1))
         self.system_resolution = self.range / (pow(2, self.bits) - 1)
 
-   
-        self.data = pd.read_excel('data.xlsx' , skiprows=1)
-        self.data.columns = self.data.columns.str.strip()
+        # Leer el archivo Excel
+        self.data = pd.read_excel('data.xlsx', skiprows=1, header=None)
+        self.data.columns = ['x1', 'x2', 'x3', 'x4', 'y']
+
+        # Verificar los nombres de las columnas
+        print("Nombres de las columnas:", self.data.columns)
+
         self.x1 = self.data['x1'].values
         self.x2 = self.data['x2'].values
         self.x3 = self.data['x3'].values
@@ -54,9 +57,7 @@ class GeneticAlgorithm:
     def select_pairs(self, population):
         fitness_values = [(self.fitness(individual), individual) for individual in population]
         fitness_values.sort(key=lambda x: x[0])
-        # Asegurarse de que self.initial_value es un número entero
-        initial_value = int(self.initial_value)
-        selected = [individual for _, individual in fitness_values[:initial_value // 2]]
+        selected = [individual for _, individual in fitness_values[:self.initial_value // 2]]
         pairs = []
         for individual in selected:
             partner = random.choice(selected)
@@ -100,9 +101,7 @@ class GeneticAlgorithm:
         if self.best_global_individual not in population:
             population.append(self.best_global_individual)
         population.sort(key=self.fitness)
-        # Asegurarse de que self.final_value es un número entero
-        final_value = int(self.final_value)
-        return population[:final_value]
+        return population[:self.final_value]
 
     def run(self):
         population = self.generate_population()
@@ -126,6 +125,8 @@ class GeneticAlgorithm:
             worst_fitness = max(fitness_generation)
             average_fitness = sum(fitness_generation) / len(fitness_generation)
 
+            self.last_population = self.prune_population(population_generate)
+
             generation_info = {
                 'generation': generation_counter,
                 'population': population_generate,
@@ -136,17 +137,16 @@ class GeneticAlgorithm:
                 'best_global_individual': self.best_global_individual,
                 'best_fitness': best_fitness,
                 'worst_fitness': worst_fitness,
-                'average_fitness': average_fitness
+                'average_fitness': average_fitness,
+                'last_population': self.last_population
             }
 
             all_generations_info.append(generation_info)
-            population = self.prune_population(population_generate)
+            population = self.last_population
 
             generation_counter += 1
+        
         A, B, C, D, E = self.best_global_individual
         print(f"Las constantes del mejor individuo son: A={A}, B={B}, C={C}, D={D}, E={E}")
-
-
-      
 
         return all_generations_info
