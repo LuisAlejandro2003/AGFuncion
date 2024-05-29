@@ -66,6 +66,14 @@ class GeneticAlgorithm:
 
 
 
+    def mutation(self, individual):
+        mutated_individual = individual.copy()
+        for i in range(len(mutated_individual)):
+            if random.random() < self.mutation_per_gen:
+                u = random.uniform(-0.01, 0.01)  
+                mutated_individual[i] = mutated_individual[i] * (1.0 + u) * random.uniform(-0.01, 0.01)  # Adjusted range
+        return mutated_individual
+
     def population_mutation(self, population):
         mutated_population = []
         for individual in population:
@@ -74,16 +82,6 @@ class GeneticAlgorithm:
             else:
                 mutated_population.append(individual)
         return mutated_population
-    
-    def mutation(self, individual):
-        mutated_individual = individual.copy()
-        for i in range(len(mutated_individual)):
-            if random.random() < self.mutation_per_gen:
-                u = np.random.normal(0, 0.4)
-                mutated_individual[i] = mutated_individual[i] * (1.0 + u) 
-        return mutated_individual
-
-   
 
     
 
