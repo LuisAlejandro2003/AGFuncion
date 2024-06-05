@@ -2,6 +2,7 @@ import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 class GeneticAlgorithm:
     def __init__(self, initial_value, final_value, generations, individual_mutation, mutation_per_gen):
@@ -64,9 +65,9 @@ class GeneticAlgorithm:
         for i in range(len(mutated_individual)):
             if random.random() < self.mutation_per_gen:
                 u = random.uniform(-1, 1)
-                # Limit the mutation based on the fitness error
+               
                 error = self.fitness(individual)
-                mutation_range = -50 if error > 1 else -error * 50  # Adjust this as needed
+                mutation_range = -50 if error > 1 else -error * 50  # Adjust this as needed         
                 mutated_individual[i] = mutated_individual[i] * (1.0 + u * random.uniform(mutation_range, 50)/100)
         return mutated_individual
 
@@ -86,11 +87,25 @@ class GeneticAlgorithm:
         population.sort(key=self.fitness)
         return population[:self.final_value]
 
+
+
+ 
+
     def run(self):
         self.reset()
         population = self.generate_population()
         results = []
         errors = []
+
+        # Almacenar los coeficientes del mejor individuo en cada generación
+        A_values = []
+        B_values = []
+        C_values = []
+        D_values = []
+        E_values = []
+        
+        # Almacenar los valores predichos de Y para el mejor individuo en cada generación
+        Y_pred_values = []
 
         for gen in range(self.generations):
             pairs_population = self.select_pairs(population)
@@ -105,6 +120,20 @@ class GeneticAlgorithm:
 
             errors.append(best_individual_error)
 
+            # Almacenar los coeficientes del mejor individuo
+            A_values.append(best_individual[0])
+            B_values.append(best_individual[1])
+            C_values.append(best_individual[2])
+            D_values.append(best_individual[3])
+            E_values.append(best_individual[4])
+            
+            # Calcular y almacenar los valores predichos de Y para el mejor individuo
+            A, B, C, D, E = best_individual
+            Y_pred = A + B * self.x1 + C * self.x2 + D * self.x3 + E * self.x4
+            Y_pred_values.append(Y_pred)
+            
+        
+
             self.last_population = self.prune_population(population_generate)
             if self.best_global_individual not in self.last_population:
                 self.last_population.append(self.best_global_individual)
@@ -116,13 +145,6 @@ class GeneticAlgorithm:
                 'best_individual_error': best_individual_error
             })
 
-        best_individual_error = self.fitness(self.best_global_individual)
-        results.append({
-            'generation': 'global',
-            'best_individual': f"A={self.best_global_individual[0]}, B={self.best_global_individual[1]}, C={self.best_global_individual[2]}, D={self.best_global_individual[3]}, E={self.best_global_individual[4]}",
-            'best_individual_error': best_individual_error
-        })
-
         # Plot the errors
         plt.figure()
         plt.plot(errors)
@@ -130,5 +152,20 @@ class GeneticAlgorithm:
         plt.ylabel('Error absoluto')
         plt.title('Evolución del error absoluto')
         plt.show()
+
+        # Plot the evolution of the coefficients
+        plt.figure()
+        plt.plot(A_values, label='A')
+        plt.plot(B_values, label='B')
+        plt.plot(C_values, label='C')
+        plt.plot(D_values, label='D')
+        plt.plot(E_values, label='E')
+        plt.xlabel('Generación')
+        plt.ylabel('Valor del coeficiente')
+        plt.title('Evolución de los coeficientes del mejor individuo')
+        plt.legend()
+        plt.show()
+
+     
 
         return results, self.last_population
