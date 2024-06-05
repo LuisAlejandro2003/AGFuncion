@@ -2,20 +2,17 @@ import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-
 
 class GeneticAlgorithm:
-    def __init__(self, initial_value, final_value, generations,  individual_mutation, mutation_per_gen):
+    def __init__(self, initial_value, final_value, generations, individual_mutation, mutation_per_gen):
         self.initial_value = int(initial_value)
         self.final_value = int(final_value)
         self.generations = generations
         self.individual_mutation = individual_mutation
         self.mutation_per_gen = mutation_per_gen
-     
+
         self.best_global_individual = None
         self.last_population = None
-
         # Leer el archivo Excel
         self.data = pd.read_excel('data1.xlsx')
         self.data.columns = ['x1', 'x2', 'x3', 'x4', 'y']
@@ -26,13 +23,10 @@ class GeneticAlgorithm:
         self.x4 = self.data['x4'].values
         self.Y = self.data['y'].values
 
-
-
     def reset(self):
         self.best_global_individual = None
         self.last_population = None
-        
-        
+
     def generate_population(self):
         population = [[random.uniform(-10, 10) for _ in range(5)] for _ in range(self.initial_value)]
         return population
@@ -49,7 +43,7 @@ class GeneticAlgorithm:
         pairs = []
         for individual in selected:
             possible_partners = [ind for ind in selected if ind != individual]
-            if possible_partners:  # Check if the list is not empty
+            if possible_partners:
                 partner = random.choice(possible_partners)
                 pairs.append((individual, partner))
         return pairs
@@ -84,7 +78,7 @@ class GeneticAlgorithm:
             else:
                 mutated_population.append(individual)
         return mutated_population
-
+    
     def find_best_individual(self, population):
         return min(population, key=self.fitness)
 
@@ -93,10 +87,10 @@ class GeneticAlgorithm:
         return population[:self.final_value]
 
     def run(self):
-        self.reset
+        self.reset()
         population = self.generate_population()
         results = []
-        errors = []  
+        errors = []
 
         for gen in range(self.generations):
             pairs_population = self.select_pairs(population)
@@ -132,9 +126,9 @@ class GeneticAlgorithm:
         # Plot the errors
         plt.figure()
         plt.plot(errors)
-        plt.xlabel('Generacion')
+        plt.xlabel('Generación')
         plt.ylabel('Error absoluto')
-        plt.title('Evolution del error absoluto')
+        plt.title('Evolución del error absoluto')
         plt.show()
 
-        return results
+        return results, self.last_population
