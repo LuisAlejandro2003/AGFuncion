@@ -2,6 +2,7 @@ import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import os
 
 class GeneticAlgorithm:
@@ -88,6 +89,21 @@ class GeneticAlgorithm:
         return population[:self.final_value]
 
 
+    
+    def plot_comparison(self, Y_real, Y_pred_values):
+        fig, ax = plt.subplots()
+    
+        def animate(i):
+            ax.clear()
+            ax.plot(Y_real, color='red', label='Valores Reales')
+            ax.plot(Y_pred_values[i], color='blue', label='Predicción Generación')
+            ax.set_xlabel('ID')
+            ax.set_ylabel('Valores de Y')
+            ax.set_title(f'Comparación de Valores Reales y Predichos - Generación {i+1}')
+            ax.legend()
+
+        ani = animation.FuncAnimation(fig, animate, frames=len(Y_pred_values), repeat=False)
+        ani.save('comparison.mp4', writer='ffmpeg')
 
  
 
@@ -96,6 +112,10 @@ class GeneticAlgorithm:
         population = self.generate_population()
         results = []
         errors = []
+        best_errors = []
+        worst_errors = []
+        avg_errors = []
+        
 
         # Almacenar los coeficientes del mejor individuo en cada generación
         A_values = []
@@ -114,6 +134,15 @@ class GeneticAlgorithm:
             population_generate = population + mutation_population
             best_individual = self.find_best_individual(population_generate)
             best_individual_error = self.fitness(best_individual)
+            
+            
+            worst_individual_error = self.fitness(max(population_generate, key=self.fitness))
+            avg_individual_error = np.mean([self.fitness(ind) for ind in population_generate])
+
+            best_errors.append(best_individual_error)
+            worst_errors.append(worst_individual_error)
+            avg_errors.append(avg_individual_error)
+            
 
             if self.best_global_individual is None or best_individual_error < self.fitness(self.best_global_individual):
                 self.best_global_individual = best_individual
@@ -131,8 +160,6 @@ class GeneticAlgorithm:
             A, B, C, D, E = best_individual
             Y_pred = A + B * self.x1 + C * self.x2 + D * self.x3 + E * self.x4
             Y_pred_values.append(Y_pred)
-            
-        
 
             self.last_population = self.prune_population(population_generate)
             if self.best_global_individual not in self.last_population:
@@ -145,15 +172,21 @@ class GeneticAlgorithm:
                 'best_individual_error': best_individual_error
             })
 
+        # Llama a plot_comparison después del bucle de generaciones
+        self.plot_comparison(self.Y, Y_pred_values)
+
         # Plot the errors
         plt.figure()
-        plt.plot(errors)
+        plt.plot(best_errors, label='Mejor error')
+        plt.plot(worst_errors, label='Peor error')
+        plt.plot(avg_errors, label='Error promedio')
         plt.xlabel('Generación')
         plt.ylabel('Error absoluto')
         plt.title('Evolución del error absoluto')
+        plt.legend()
         plt.show()
 
-        # Plot the evolution of the coefficients
+    
         plt.figure()
         plt.plot(A_values, label='A')
         plt.plot(B_values, label='B')
@@ -166,6 +199,5 @@ class GeneticAlgorithm:
         plt.legend()
         plt.show()
 
-     
 
         return results, self.last_population
