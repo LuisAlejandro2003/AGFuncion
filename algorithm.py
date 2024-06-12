@@ -33,6 +33,7 @@ class GeneticAlgorithm:
         population = [[random.uniform(-10, 10) for _ in range(5)] for _ in range(self.initial_value)]
         return population
 
+    #Error Absoluto Medio ( Promedio de las diferencias absolutas en ambas Ys)
     def fitness(self, individual):
         A, B, C, D, E = individual
         Y_pred = A + B * self.x1 + C * self.x2 + D * self.x3 + E * self.x4
@@ -49,6 +50,7 @@ class GeneticAlgorithm:
                 partner = random.choice(possible_partners)
                 pairs.append((individual, partner))
         return pairs
+
 
     def crossover(self, pairs):
         children = []
@@ -68,7 +70,7 @@ class GeneticAlgorithm:
                 u = random.uniform(-1, 1)
                
                 error = self.fitness(individual)
-                mutation_range = -50 if error > 1 else -error * 50  # Adjust this as needed         
+                mutation_range = -50 if error > 1 else -error * 50          
                 mutated_individual[i] = mutated_individual[i] * (1.0 + u * random.uniform(mutation_range, 50)/100)
         return mutated_individual
 
@@ -133,17 +135,17 @@ class GeneticAlgorithm:
             mutation_population = self.population_mutation(crossover_population)
             population_generate = population + mutation_population
             best_individual = self.find_best_individual(population_generate)
+            
+            #Calcular promedios , mejor y peor
             best_individual_error = self.fitness(best_individual)
-            
-            
             worst_individual_error = self.fitness(max(population_generate, key=self.fitness))
             avg_individual_error = np.mean([self.fitness(ind) for ind in population_generate])
-
+            #agregarlos
             best_errors.append(best_individual_error)
             worst_errors.append(worst_individual_error)
             avg_errors.append(avg_individual_error)
             
-
+            #Si el mejor individuo global no esta en la polacion atual lo agrega
             if self.best_global_individual is None or best_individual_error < self.fitness(self.best_global_individual):
                 self.best_global_individual = best_individual
 
@@ -160,19 +162,20 @@ class GeneticAlgorithm:
             A, B, C, D, E = best_individual
             Y_pred = A + B * self.x1 + C * self.x2 + D * self.x3 + E * self.x4
             Y_pred_values.append(Y_pred)
-
+            
+            #PODA
             self.last_population = self.prune_population(population_generate)
             if self.best_global_individual not in self.last_population:
                 self.last_population.append(self.best_global_individual)
             population = self.last_population
-
+            #regresa todos los resultados
             results.append({
                 'generation': gen + 1,
                 'best_individual': f"A={best_individual[0]}, B={best_individual[1]}, C={best_individual[2]}, D={best_individual[3]}, E={best_individual[4]}",
                 'best_individual_error': best_individual_error
             })
 
-        # Llama a plot_comparison después del bucle de generaciones
+        # Llama a plot_comparison para la grafica después del bucle de generaciones
         self.plot_comparison(self.Y, Y_pred_values)
 
         # Plot the errors
@@ -201,3 +204,4 @@ class GeneticAlgorithm:
 
 
         return results, self.last_population
+    
